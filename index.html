@@ -73,6 +73,82 @@
             </button>
         </div>
 
+        <!-- Modal de pagamento -->
+        <div
+            id="paymentModal"
+            style="
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                justify-content: center;
+                align-items: center;
+                flex-direction: column;
+                z-index: 1000;
+            "
+        >
+            <div
+                style="
+                    background: #222;
+                    padding: 2rem;
+                    border-radius: 12px;
+                    max-width: 400px;
+                    text-align: center;
+                "
+            >
+                <h2>Pay $0.99 in USDC (Solana)</h2>
+                <p>Send 0.99 USDC to this address:</p>
+                <code
+                    style="
+                        user-select: all;
+                        display: block;
+                        margin-bottom: 1rem;
+                        font-size: 0.9rem;
+                    "
+                    >4duxyG9rou5NRZgziN8WKaMLXYP1Yms4C2QBMkuoD8em</code
+                >
+                <p>Or scan QR code:</p>
+                <img
+                    src="assets/qr-usdc-solana.png"
+                    alt="USDC Solana QR Code"
+                    style="width: 200px; margin: 1rem auto"
+                />
+                <button
+                    id="paidBtn"
+                    style="
+                        padding: 1rem 2rem;
+                        background: #00c08b;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: bold;
+                        margin-top: 1rem;
+                    "
+                >
+                    I Already Paid
+                </button>
+                <button
+                    id="cancelPaymentBtn"
+                    style="
+                        margin-top: 1rem;
+                        padding: 1rem 2rem;
+                        background: #f6465d;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: bold;
+                        color: white;
+                    "
+                >
+                    Cancel
+                </button>
+            </div>
+        </div>
+
         <script src="script.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     </body>
