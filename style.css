@@ -1,0 +1,174 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700;800&display=swap");
+
+body {
+    font-family: "Poppins", sans-serif;
+    background: url("assets/background.jpg") no-repeat center center fixed;
+    background-size: cover;
+    color: white;
+    padding: 2rem;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 550px;
+    margin: auto;
+    background: rgba(22, 27, 34, 0.85);
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+}
+
+label {
+    display: block;
+    margin-top: 1.2rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+input,
+select {
+    width: 96%;
+    padding: 0.7rem;
+    margin-top: 0.3rem;
+    border-radius: 8px;
+    border: none;
+    background: #0d1117;
+    color: white;
+    font-size: 0.95rem;
+    outline: none;
+}
+
+input:focus,
+select:focus {
+    box-shadow: 0 0 0 2px #1f6feb77;
+}
+
+button {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #015512;
+    border: none;
+    width: 100%;
+    color: white;
+    font-weight: bold;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+button:hover {
+    background: #01390c;
+}
+
+#preview {
+    margin-top: 2rem;
+    overflow: hidden; /* Esconde o espaço extra */
+    height: 280px; /* Aproximadamente 652px * 0.43 */
+    position: relative;
+}
+
+#preview #card {
+    transform: scale(0.43); /* 500 / 1160 ≈ 0.43 */
+    transform-origin: top left;
+    width: 1160px;
+    height: 652px;
+}
+
+.screenshot-card {
+    width: 1160px;
+    height: 652px;
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    font-family: "Poppins", sans-serif;
+    color: white;
+    overflow: hidden;
+}
+
+.screenshot-card.binance .position-line {
+    position: absolute;
+    top: 180px;
+    left: 100px;
+    font-size: 24px;
+    font-weight: 500;
+}
+
+.screenshot-card.binance .position-line span {
+    margin-right: 54px;
+}
+
+.screenshot-card .position-type.long {
+    color: #00c08b; /* verde */
+}
+
+.screenshot-card .position-type.short {
+    color: #f6465d; /* vermelho */
+}
+
+.screenshot-card.binance .pnl {
+    position: absolute;
+    top: 220px;
+    left: 100px;
+    font-size: 90px;
+    font-weight: 550;
+}
+
+.positive {
+    color: #00c08b;
+}
+
+.negative {
+    color: #f6465d;
+}
+
+.screenshot-card.binance .entry,
+.screenshot-card.binance .last {
+    position: absolute;
+    left: 260px;
+    font-size: 28px;
+    font-weight: 500;
+    color: #ffb800;
+}
+
+.screenshot-card.binance .entry {
+    top: 340px;
+}
+
+.screenshot-card.binance .last {
+    top: 382px;
+}
+
+.screenshot-card.binance .timestamp {
+    position: absolute;
+    bottom: 10px;
+    right: 30px;
+    font-size: 20px;
+    font-weight: 300;
+    color: #cccccc;
+}
+
+.screenshot-card .watermark {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    color: red;
+    opacity: 0.3;
+    font-size: 20px;
+}
+
+.watermark-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-15deg);
+    font-size: 100px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+    z-index: 999;
+}

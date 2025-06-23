@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Fake Trade Screenshot</title>
+        <link rel="stylesheet" href="style.css" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700;800&display=swap"
+            rel="stylesheet"
+        />
+    </head>
+    <body>
+        <div class="container">
+            <h1>Fake Trade Screenshot Generator</h1>
+
+            <form id="tradeForm">
+                <label>
+                    Platform:
+                    <select id="platform" required>
+                        <option value="">-- Choose Platform --</option>
+                        <option value="binance">Binance</option>
+                        <option value="mexc">MEXC</option>
+                        <option value="bybit">Bybit</option>
+                    </select>
+                </label>
+
+                <label>
+                    Position Type:
+                    <select id="position">
+                        <option value="Long">Long</option>
+                        <option value="Short">Short</option>
+                    </select>
+                </label>
+
+                <label>
+                    Leverage (X):
+                    <input type="number" id="leverage" value="100" required />
+                </label>
+
+                <label>
+                    Pair (ex: SOLUSDT):
+                    <input type="text" id="pair" required />
+                </label>
+
+                <label>
+                    Entry Price:
+                    <input type="number" id="entry" step="0.001" required />
+                </label>
+
+                <label>
+                    Last Price:
+                    <input type="number" id="last" step="0.001" required />
+                </label>
+
+                <label>
+                    Timestamp:
+                    <input type="datetime-local" id="timestamp" required />
+                </label>
+
+                <button type="submit">Generate Preview</button>
+            </form>
+
+            <div id="preview"></div>
+
+            <button id="downloadBtn" style="display: none">
+                Pay $0.99 to Remove Watermark and Download Screenshot
+            </button>
+        </div>
+
+        <script src="script.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    </body>
+</html>
