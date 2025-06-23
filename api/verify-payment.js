@@ -61,12 +61,21 @@ export default async function handler(req, res) {
 
                     // Se quiser algo mais completo, tem libs que interpretam melhor o instruction.data.
 
-                    const destAccountIndex = ix.accounts[1]; // posição 1 geralmente é o destino na transferência
+                    const destAccountIndex = ix.accounts?.[1];
+
+                    if (typeof destAccountIndex !== "number") {
+                        console.log(
+                            "destAccountIndex inválido ou não encontrado",
+                            ix.accounts
+                        );
+                        continue;
+                    }
+
                     const destAccountPubkey =
                         tx.transaction.message.accountKeys[destAccountIndex];
 
                     if (
-                        destAccountPubkey.toString() ===
+                        destAccountPubkey?.toString() ===
                         receiverPubkey.toString()
                     ) {
                         // Encontrou transação que enviou algum token pra você, vamos verificar valor e mint
