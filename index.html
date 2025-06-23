@@ -20,8 +20,8 @@
                     <select id="platform" required>
                         <option value="">-- Choose Platform --</option>
                         <option value="binance">Binance</option>
-                        <option value="mexc">MEXC</option>
-                        <option value="bybit">Bybit</option>
+                        <!--<option value="mexc">MEXC</option>
+                        <option value="bybit">Bybit</option>-->
                     </select>
                 </label>
 
@@ -55,7 +55,12 @@
 
                 <label>
                     Timestamp:
-                    <input type="datetime-local" id="timestamp" required />
+                    <input
+                        type="datetime-local"
+                        id="timestamp"
+                        placeholder="YYYY-MM-DD HH:MM"
+                        required
+                    />
                 </label>
 
                 <button type="submit">Generate Preview</button>
@@ -63,7 +68,7 @@
 
             <div id="preview"></div>
 
-            <button id="downloadBtn" style="display: none">
+            <button id="downloadBtn" style="margin-top: 2rem; display: none">
                 Pay $0.99 to Remove Watermark and Download Screenshot
             </button>
         </div>
