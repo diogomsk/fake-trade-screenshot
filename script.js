@@ -39,65 +39,67 @@ function generatePreview(withWatermark = true) {
 
     const formattedPnL = (pnl >= 0 ? "+" : "") + pnl.toFixed(2);
 
-    const watermarkHtml = withWatermark
-        ? `<div class="watermark-overlay">FAKETRADESHOT.XYZ</div>`
-        : "";
+    if (withWatermark) {
+        // Preview COM watermark para o usuário
+        const watermarkHtml = `<div class="watermark-overlay">FAKETRADESHOT.XYZ</div>`;
 
-    const previewHTML = `
-    <div id="card" class="screenshot-card ${platform}" style="background-image: url('${
-        platformBg[platform]
-    }');">
-      <div class="position-line">
-        <span class="position-type ${position.toLowerCase()}">${position}</span>
-        <span class="leverage">${leverage}X</span>
-        <span class="pair">${pair} Perpetual</span>
-      </div>
-      <div class="pnl ${
-          pnl >= 0 ? "positive" : "negative"
-      }">${formattedPnL}%</div>
-      <div class="entry"><span class="value">${formattedEntry}</span></div>
-      <div class="last"><span class="value">${formattedLast}</span></div>
-      <div class="timestamp">${timestamp}</div>
-      ${watermarkHtml}
-    </div>
-  `;
+        const previewHTML = `
+        <div id="card" class="screenshot-card ${platform}" style="background-image: url('${
+            platformBg[platform]
+        }'); width: 580px; height: 326px;">
+          <div class="position-line">
+            <span class="position-type ${position.toLowerCase()}">${position}</span>
+            <span class="leverage">${leverage}X</span>
+            <span class="pair">${pair} Perpetual</span>
+          </div>
+          <div class="pnl ${
+              pnl >= 0 ? "positive" : "negative"
+          }">${formattedPnL}%</div>
+          <div class="entry"><span class="value">${formattedEntry}</span></div>
+          <div class="last"><span class="value">${formattedLast}</span></div>
+          <div class="timestamp">${timestamp}</div>
+          ${watermarkHtml}
+        </div>
+        `;
+        document.getElementById("preview").innerHTML = previewHTML;
+    } else {
+        // Gerar canvas invisível SEM watermark e no tamanho original para download
+        const cleanCard = document.createElement("div");
+        cleanCard.className = `screenshot-card ${platform}`;
+        cleanCard.style.backgroundImage = `url('${platformBg[platform]}')`;
+        cleanCard.style.width = "1160px";
+        cleanCard.style.height = "652px";
+        cleanCard.style.position = "absolute";
+        cleanCard.style.left = "-9999px";
+        cleanCard.style.top = "0";
 
-    document.getElementById("preview").innerHTML = previewHTML;
+        cleanCard.innerHTML = `
+          <div class="position-line">
+            <span class="position-type ${position.toLowerCase()}">${position}</span>
+            <span class="leverage">${leverage}X</span>
+            <span class="pair">${pair} Perpetual</span>
+          </div>
+          <div class="pnl ${
+              pnl >= 0 ? "positive" : "negative"
+          }">${formattedPnL}%</div>
+          <div class="entry"><span class="value">${formattedEntry}</span></div>
+          <div class="last"><span class="value">${formattedLast}</span></div>
+          <div class="timestamp">${timestamp}</div>
+        `;
 
-    // === Gerar card invisível para download (sem watermark) em tamanho real ===
-    const cleanCard = document.createElement("div");
-    cleanCard.className = `screenshot-card ${platform}`;
-    cleanCard.style.backgroundImage = `url('${platformBg[platform]}')`;
-    cleanCard.style.width = "1160px";
-    cleanCard.style.height = "652px";
-    cleanCard.style.position = "absolute";
-    cleanCard.style.left = "-9999px";
+        document.body.appendChild(cleanCard);
 
-    cleanCard.innerHTML = `
-      <div class="position-line">
-        <span class="position-type ${position.toLowerCase()}">${position}</span>
-        <span class="leverage">${leverage}X</span>
-        <span class="pair">${pair} Perpetual</span>
-      </div>
-      <div class="pnl ${
-          pnl >= 0 ? "positive" : "negative"
-      }">${formattedPnL}%</div>
-      <div class="entry"><span class="value">${formattedEntry}</span></div>
-      <div class="last"><span class="value">${formattedLast}</span></div>
-      <div class="timestamp">${timestamp}</div>
-    `;
-
-    document.body.appendChild(cleanCard);
-
-    html2canvas(cleanCard, {
-        useCORS: true,
-        backgroundColor: null,
-        width: 1160,
-        height: 652,
-    }).then((canvas) => {
-        lastCanvas = canvas;
-        document.body.removeChild(cleanCard); // limpar
-    });
+        html2canvas(cleanCard, {
+            useCORS: true,
+            backgroundColor: null,
+            width: 1160,
+            height: 652,
+            scale: 1,
+        }).then((canvas) => {
+            lastCanvas = canvas;
+            document.body.removeChild(cleanCard);
+        });
+    }
 
     downloadBtn.style.display = "block";
 }
@@ -112,11 +114,13 @@ if (DEBUG_MODE) {
     document.getElementById("timestamp").value = "2025-06-22T14:45";
 
     generatePreview(true);
+    generatePreview(false);
 }
 
 document.getElementById("tradeForm").addEventListener("submit", function (e) {
     e.preventDefault();
-    generatePreview(true);
+    generatePreview(true); // atualiza preview visível com watermark
+    generatePreview(false); // atualiza canvas invisível para download sem watermark
 });
 
 downloadBtn.addEventListener("click", () => {
@@ -145,8 +149,15 @@ paidBtn.addEventListener("click", async () => {
         "Please enter your Solana wallet address used for payment:"
     );
 
+    const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
     if (!payerPublicKey) {
         alert("Wallet address is required.");
+        return;
+    }
+
+    if (!base58Regex.test(payerPublicKey)) {
+        alert("Invalid Solana address format.");
         return;
     }
 
@@ -176,6 +187,25 @@ paidBtn.addEventListener("click", async () => {
     }
 });
 
+async function loadReceiverWallet() {
+    try {
+        const response = await fetch("/api/get-wallet");
+        const data = await response.json();
+        if (data.wallet) {
+            const walletEl = document.getElementById("receiverWallet");
+            if (walletEl) {
+                walletEl.textContent = data.wallet;
+            }
+        }
+    } catch (e) {
+        console.error("Failed to load wallet address:", e);
+    }
+}
+
 cancelPaymentBtn.addEventListener("click", () => {
     paymentModal.style.display = "none";
 });
+
+window.onload = () => {
+    loadReceiverWallet();
+};
