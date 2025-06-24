@@ -75,11 +75,12 @@ export default async function handler(req, res) {
                     const timestampRaw = tx.timestamp;
                     const blockTimeRaw = tx.blockTime;
 
-                    const txTime = timestampRaw
-                        ? new Date(timestampRaw).getTime()
-                        : blockTimeRaw
-                        ? blockTimeRaw * 1000
-                        : 0;
+                    const txTime =
+                        typeof timestampRaw === "number"
+                            ? timestampRaw * 1000
+                            : blockTimeRaw
+                            ? blockTimeRaw * 1000
+                            : 0;
 
                     const ageMs = now - txTime;
 
