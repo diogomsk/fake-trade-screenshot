@@ -1,18 +1,3 @@
-import { Connection, PublicKey } from "@solana/web3.js";
-
-const RPC_ENDPOINT =
-    "https://mainnet.helius-rpc.com/?api-key=de8a1ffd-8910-4f4b-a6e1-b8d1778296ea";
-const connection = new Connection(RPC_ENDPOINT);
-
-const RECEIVER_ADDRESS = "4duxyG9rou5NRZgziN8WKaMLXYP1Yms4C2QBMkuoD8em";
-const USDC_MINT_ADDRESS = "Es9vMFrzaCERJJk5f6ehdE8S7s8Z2RyAwqu7gTgnf2K";
-const USDC_DECIMALS = 6;
-const REQUIRED_AMOUNT = 0.99;
-
-function delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export default async function handler(req, res) {
     if (req.method !== "POST") {
         return res
@@ -29,106 +14,55 @@ export default async function handler(req, res) {
             .json({ success: false, error: "Missing senderAddress" });
     }
 
+    const HELIUS_API_KEY = "de8a1ffd-8910-4f4b-a6e1-b8d1778296ea";
+    const RECEIVER = "4duxyG9rou5NRZgziN8WKaMLXYP1Yms4C2QBMkuoD8em";
+    const USDC_MINT = "Es9vMFrzaCERJJk5f6ehdE8S7s8Z2RyAwqu7gTgnf2K";
+    const REQUIRED_AMOUNT = 0.99;
+
     try {
-        const senderPubkey = new PublicKey(senderAddress);
-        const receiverPubkey = new PublicKey(RECEIVER_ADDRESS);
-        const usdcMintPubkey = new PublicKey(USDC_MINT_ADDRESS);
+        const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+        const body = {
+            jsonrpc: "2.0",
+            id: "payment-check",
+            method: "getTransactions",
+            params: {
+                account: senderAddress,
+                limit: 10,
+            },
+        };
 
-        const signatures = await connection.getSignaturesForAddress(
-            senderPubkey,
-            {
-                limit: 5,
-            }
-        );
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+        });
 
-        console.log(
-            "📝 Found signatures:",
-            signatures.map((s) => s.signature)
-        );
+        const json = await response.json();
+        const transactions = json.result || [];
 
-        for (const sigInfo of signatures) {
-            await delay(300);
+        console.log("📦 Total transactions found:", transactions.length);
 
-            const tx = await connection.getTransaction(sigInfo.signature, {
-                commitment: "confirmed",
-            });
+        for (const tx of transactions) {
+            const transfers = tx.tokenTransfers || [];
+            for (const transfer of transfers) {
+                console.log("🔍 Checking transfer:", transfer);
 
-            if (!tx || !tx.transaction || !tx.transaction.message) {
-                console.log(
-                    "⚠️ Empty or invalid transaction:",
-                    sigInfo.signature
-                );
-                continue;
-            }
-
-            const instructions = tx.transaction.message.instructions;
-            console.log("🔍 Checking transaction:", sigInfo.signature);
-
-            for (const ix of instructions) {
                 if (
-                    ix.programId?.toString() ===
-                    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+                    transfer.fromUserAccount === senderAddress &&
+                    transfer.toUserAccount === RECEIVER &&
+                    transfer.mint === USDC_MINT &&
+                    parseFloat(transfer.tokenAmount) >= REQUIRED_AMOUNT
                 ) {
-                    const destAccountIndex = ix.accounts?.[1];
-                    if (typeof destAccountIndex !== "number") {
-                        console.log(
-                            "⚠️ destAccountIndex inválido:",
-                            ix.accounts
-                        );
-                        continue;
-                    }
-
-                    const destAccountPubkey =
-                        tx.transaction.message.accountKeys[destAccountIndex];
-
-                    console.log("➡️ Destino:", destAccountPubkey?.toString());
-
-                    if (
-                        destAccountPubkey?.toString() ===
-                        receiverPubkey.toString()
-                    ) {
-                        const tokenBalances = tx.meta?.postTokenBalances || [];
-
-                        for (const tokenBalance of tokenBalances) {
-                            console.log("💰 tokenBalance:", tokenBalance);
-
-                            if (
-                                tokenBalance.owner ===
-                                    receiverPubkey.toString() &&
-                                tokenBalance.mint === usdcMintPubkey.toString()
-                            ) {
-                                const uiAmount =
-                                    parseInt(
-                                        tokenBalance.uiTokenAmount.amount
-                                    ) / Math.pow(10, USDC_DECIMALS);
-
-                                console.log("🔢 uiAmount:", uiAmount);
-
-                                if (uiAmount >= REQUIRED_AMOUNT) {
-                                    console.log(
-                                        "✅ Pagamento encontrado:",
-                                        sigInfo.signature
-                                    );
-                                    return res
-                                        .status(200)
-                                        .json({ success: true });
-                                } else {
-                                    console.log(
-                                        "❌ Valor insuficiente:",
-                                        uiAmount
-                                    );
-                                }
-                            }
-                        }
-                    }
+                    console.log("✅ Pagamento confirmado:", transfer.signature);
+                    return res.status(200).json({ success: true });
                 }
             }
         }
 
-        console.log("🚫 Pagamento não encontrado.");
+        console.log("🚫 Nenhum pagamento válido encontrado.");
         return res.status(200).json({ success: false });
     } catch (error) {
-        console.error("❌ Error verifying payment:", error);
+        console.error("❌ Erro ao verificar pagamento:", error);
         return res
             .status(500)
             .json({ success: false, error: "Internal Server Error" });
