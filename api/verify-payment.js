@@ -11,14 +11,13 @@ export default async function handler(req, res) {
     if (req.method !== "POST")
         return res
             .status(405)
-            .json({ success: false, error: "Method Not Allowed" });
+            .json({ success: false, error: "Only POST allowed" });
 
     const { payerPublicKey } = req.body;
     if (!payerPublicKey)
         return res
             .status(400)
             .json({ success: false, error: "Missing payerPublicKey" });
-
     console.log("🔔 verify-payment called. payerPublicKey:", payerPublicKey);
 
     const HELIUS_API_KEY = "de8a1ffd-8910-4f4b-a6e1-b8d1778296ea";
@@ -27,25 +26,25 @@ export default async function handler(req, res) {
     const REQUIRED_AMOUNT = 0.99;
 
     try {
-        const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
-        const body = {
-            jsonrpc: "2.0",
-            id: "mintTransfers",
-            method: "getTokenTransfersByMint",
-            params: {
-                mint: USDC_MINT,
-                toWallet: RECEIVER,
-                limit: 20,
-            },
-        };
+        const resp = await fetch(
+            `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    jsonrpc: "2.0",
+                    id: "mintTransfers",
+                    method: "getTokenTransfersByMint",
+                    params: {
+                        mint: USDC_MINT,
+                        toWallet: RECEIVER,
+                        limit: 20,
+                    },
+                }),
+            }
+        );
 
-        const resp = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-        });
         const { result: transfers = [] } = await resp.json();
-
         console.log("📦 Total mint‑specific transfers:", transfers.length);
 
         for (const t of transfers) {
