@@ -44,9 +44,7 @@ function generatePreview(withWatermark = true) {
         const watermarkHtml = `<div class="watermark-overlay">FAKETRADESHOT.XYZ</div>`;
 
         const previewHTML = `
-        <div id="card" class="screenshot-card ${platform}" style="background-image: url('${
-            platformBg[platform]
-        }'); width: 580px; height: 326px;">
+        <div id="card" class="screenshot-card ${platform}">
           <div class="position-line">
             <span class="position-type ${position.toLowerCase()}">${position}</span>
             <span class="leverage">${leverage}X</span>
@@ -62,10 +60,10 @@ function generatePreview(withWatermark = true) {
         </div>
         `;
         document.getElementById("preview").innerHTML = `
-    <div class="preview-wrapper">
-        ${previewHTML}
-    </div>
-`;
+          <div class="preview-wrapper">
+            ${previewHTML}
+          </div>
+        `;
     } else {
         // Gerar canvas invisível SEM watermark e no tamanho original para download
         const cleanCard = document.createElement("div");
@@ -123,8 +121,8 @@ if (DEBUG_MODE) {
 
 document.getElementById("tradeForm").addEventListener("submit", function (e) {
     e.preventDefault();
-    generatePreview(true); // atualiza preview visível com watermark
-    generatePreview(false); // atualiza canvas invisível para download sem watermark
+    generatePreview(true); // preview com watermark (escala 0.43 via CSS)
+    generatePreview(false); // canvas full size para download sem watermark
 });
 
 downloadBtn.addEventListener("click", () => {
