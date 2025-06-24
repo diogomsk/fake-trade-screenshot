@@ -20,30 +20,19 @@ export default async function handler(req, res) {
     const REQUIRED_AMOUNT = 0.99;
 
     try {
-        const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
-        const body = {
-            jsonrpc: "2.0",
-            id: "payment-check",
-            method: "getTransactions",
-            params: {
-                account: RECEIVER, //minha wallet
-                limit: 10,
-            },
-        };
+        const url = `https://api.helius.xyz/v0/addresses/${RECEIVER}/transactions?api-key=${HELIUS_API_KEY}&type=TRANSFER`;
 
-        const response = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-        });
+        const response = await fetch(url);
+        const transactions = await response.json();
 
-        const json = await response.json();
-        const transactions = json.result || [];
-
-        console.log("📦 Total transactions found:", transactions.length);
+        console.log(
+            "📦 Total TRANSFER transactions found:",
+            transactions.length
+        );
 
         for (const tx of transactions) {
             const transfers = tx.tokenTransfers || [];
+
             for (const transfer of transfers) {
                 if (
                     transfer.fromUserAccount === senderAddress &&
@@ -51,10 +40,10 @@ export default async function handler(req, res) {
                     transfer.mint === USDC_MINT &&
                     parseFloat(transfer.tokenAmount) >= REQUIRED_AMOUNT
                 ) {
-                    console.log("✅ Pagamento confirmado:", transfer.signature);
+                    console.log("✅ Pagamento confirmado:", tx.signature);
                     return res
                         .status(200)
-                        .json({ success: true, signature: transfer.signature });
+                        .json({ success: true, signature: tx.signature });
                 }
             }
         }
