@@ -34,8 +34,8 @@ function generatePreview(withWatermark = true) {
     let pnl = ((last - entry) / entry) * 100 * leverage;
     if (position.toLowerCase() === "short") pnl *= -1;
 
-    const formattedEntry = entry.toFixed(3);
-    const formattedLast = last.toFixed(3);
+    const formattedEntry = parseFloat(entry.toFixed(3)).toString();
+    const formattedLast = parseFloat(last.toFixed(3)).toString();
     const formattedPnL = (pnl >= 0 ? "+" : "") + pnl.toFixed(2);
 
     if (withWatermark) {

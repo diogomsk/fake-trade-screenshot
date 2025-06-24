@@ -5,6 +5,8 @@ const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const REQUIRED_AMOUNT = 0.99;
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
 
+const MAX_PAYMENT_AGE_MS = 5 * 60 * 1000; // 5 minutos
+
 export default async function handler(req, res) {
     if (req.method !== "POST") {
         return res
@@ -43,9 +45,7 @@ export default async function handler(req, res) {
 
     try {
         const heliusUrl = `https://api.helius.xyz/v0/addresses/${payerPublicKey}/transactions?api-key=${HELIUS_API_KEY}`;
-        const response = await fetch(
-            `https://api.helius.xyz/v0/addresses/${payerPublicKey}/transactions?api-key=${HELIUS_API_KEY}`
-        );
+        const response = await fetch(heliusUrl);
 
         if (!response.ok) {
             console.error(
@@ -59,23 +59,44 @@ export default async function handler(req, res) {
         }
 
         const transactions = await response.json();
-
         console.log(`📦 Found ${transactions.length} transactions for payer`);
 
         for (const tx of transactions) {
             const transfers = tx.tokenTransfers || [];
+
             for (const t of transfers) {
-                if (
+                const isValid =
                     t.fromUserAccount === payerPublicKey &&
                     t.toUserAccount === RECEIVER_WALLET &&
                     t.mint === USDC_MINT &&
-                    parseFloat(t.tokenAmount) >= REQUIRED_AMOUNT
-                ) {
-                    console.log("✅ Valid USDC payment found:", tx.signature);
-                    return res.status(200).json({
-                        success: true,
-                        signature: tx.signature,
-                    });
+                    parseFloat(t.tokenAmount) >= REQUIRED_AMOUNT;
+
+                if (isValid) {
+                    const txTime = new Date(tx.timestamp).getTime();
+                    const now = Date.now();
+                    const age = now - txTime;
+
+                    console.log(`🕒 Payment age: ${Math.round(age / 1000)}s`);
+
+                    if (age <= MAX_PAYMENT_AGE_MS) {
+                        console.log(
+                            "✅ Valid and recent USDC payment found:",
+                            tx.signature
+                        );
+                        return res.status(200).json({
+                            success: true,
+                            signature: tx.signature,
+                        });
+                    } else {
+                        console.warn(
+                            "⚠️ Payment found, but too old:",
+                            tx.signature
+                        );
+                        return res.status(200).json({
+                            success: false,
+                            error: "Payment is too old. Please pay again.",
+                        });
+                    }
                 }
             }
         }
