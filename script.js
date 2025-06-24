@@ -42,7 +42,9 @@ function generatePreview(withWatermark = true) {
         const watermarkHtml = `<div class="watermark-overlay">FAKETRADESHOT.XYZ</div>`;
 
         const previewHTML = `
-            <div id="card" class="screenshot-card ${platform}">
+            <div id="card" class="screenshot-card ${platform}" style="background-image: url('${
+            platformBg[platform]
+        }')">
               <div class="position-line">
                 <span class="position-type ${position.toLowerCase()}">${position}</span>
                 <span class="leverage">${leverage}X</span>
@@ -58,9 +60,8 @@ function generatePreview(withWatermark = true) {
             </div>
         `;
 
-        document.getElementById(
-            "preview"
-        ).innerHTML = `<div class="preview-wrapper">${previewHTML}</div>`;
+        // INSERIR DIRETO dentro do #preview SEM wrapper extra
+        document.getElementById("preview").innerHTML = previewHTML;
     } else {
         const cleanCard = document.createElement("div");
         cleanCard.className = `screenshot-card ${platform}`;
@@ -117,8 +118,8 @@ if (DEBUG_MODE) {
 
 document.getElementById("tradeForm").addEventListener("submit", function (e) {
     e.preventDefault();
-    generatePreview(true); // atualiza preview visível com watermark
-    generatePreview(false); // atualiza canvas invisível para download sem watermark
+    generatePreview(true); // preview visível com watermark
+    generatePreview(false); // canvas para download sem watermark
 });
 
 downloadBtn.addEventListener("click", () => {
@@ -129,12 +130,8 @@ function copyWallet() {
     const wallet = document.getElementById("receiverWallet").textContent.trim();
     navigator.clipboard
         .writeText(wallet)
-        .then(() => {
-            alert("Wallet address copied to clipboard!");
-        })
-        .catch(() => {
-            alert("Failed to copy wallet address.");
-        });
+        .then(() => alert("Wallet address copied to clipboard!"))
+        .catch(() => alert("Failed to copy wallet address."));
 }
 
 paidBtn.addEventListener("click", async () => {

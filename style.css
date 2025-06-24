@@ -63,22 +63,18 @@ button:hover {
 }
 
 #preview {
-    width: 100%;
-    max-width: 550px; /* mesmo max-width do container */
-    overflow-x: auto;
-    display: flex;
-    justify-content: center;
-    padding: 2rem 0;
-    border: 1px solid transparent; /* evita colapso */
-    box-sizing: border-box; /* importante */
+    margin-top: 2rem;
+    overflow: hidden; /* Esconde barras de rolagem */
+    height: 280px; /* 652px * 0.43 = 280px */
+    position: relative;
+    width: 550px; /* largura do container, pode ajustar conforme seu layout */
 }
 
-.preview-wrapper {
+#preview #card {
     transform: scale(0.43);
     transform-origin: top left;
-    width: 1160px; /* tamanho original do card */
+    width: 1160px;
     height: 652px;
-    box-sizing: border-box;
 }
 
 .screenshot-card {
