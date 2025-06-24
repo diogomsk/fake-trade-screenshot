@@ -5,22 +5,23 @@ const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const RECEIVER_WALLET = "4duxyG9rou5NRZgziN8WKaMLXYP1Yms4C2QBMkuoD8em";
 const REQUIRED_AMOUNT = 0.99;
 
+/** verify-payment.js **/
+
 export default async function handler(req, res) {
-    if (req.method !== "POST") {
+    if (req.method !== "POST")
         return res
             .status(405)
             .json({ success: false, error: "Method Not Allowed" });
-    }
+
     const { payerPublicKey } = req.body;
-    if (!payerPublicKey) {
+    if (!payerPublicKey)
         return res
             .status(400)
             .json({ success: false, error: "Missing payerPublicKey" });
-    }
 
     console.log("🔔 verify-payment called. payerPublicKey:", payerPublicKey);
 
-    const HELIUS_API_KEY = "de8a1ffd-8910-4f4b-a6e1-b8d1778296ea";
+    const HELIUS_API_KEY = "...";
     const RECEIVER = "4duxyG9rou5NRZgziN8WKaMLXYP1Yms4C2QBMkuoD8em";
     const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
     const REQUIRED_AMOUNT = 0.99;
@@ -29,11 +30,11 @@ export default async function handler(req, res) {
         const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
         const body = {
             jsonrpc: "2.0",
-            id: "tokenTransfers",
-            method: "getTokenTransfersByWallet",
+            id: "mintTransfers",
+            method: "getTokenTransfersByMint",
             params: {
-                wallet: RECEIVER,
                 mint: USDC_MINT,
+                toWallet: RECEIVER,
                 limit: 20,
             },
         };
@@ -43,13 +44,12 @@ export default async function handler(req, res) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body),
         });
-        const json = await resp.json();
-        const transfers = json.result || [];
+        const { result: transfers = [] } = await resp.json();
 
-        console.log("📦 Total TRANSFERS found:", transfers.length);
+        console.log("📦 Total mint‐specific transfers:", transfers.length);
 
         for (const t of transfers) {
-            console.log("🔍 Checking transfer:", t);
+            console.log("🔍 Transfer:", t);
             if (
                 t.fromUserAccount === payerPublicKey &&
                 t.toUserAccount === RECEIVER &&
