@@ -7,19 +7,7 @@ const USDC_MINT = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
 const RECEIVER_WALLET = new PublicKey(
     "4duxyG9rou5NRZgziN8WKaMLXYP1Yms4C2QBMkuoD8em"
 );
-const HELIUS_API_KEY = "de8a1ffd-8910-4f4b-a6e1-b8d1778296ea";
 const REQUIRED_AMOUNT = 0.99;
-
-async function getUsdcTokenAccount(walletAddress) {
-    const accounts = await connection.getTokenAccountsByOwner(
-        new PublicKey(walletAddress),
-        { mint: USDC_MINT }
-    );
-    if (accounts.value.length > 0) {
-        return accounts.value[0].pubkey.toBase58();
-    }
-    return null;
-}
 
 export default async function handler(req, res) {
     if (req.method !== "POST") {
@@ -38,29 +26,19 @@ export default async function handler(req, res) {
     }
 
     try {
-        const senderTokenAccount = await getUsdcTokenAccount(payerPublicKey);
-        const receiverTokenAccount = await getUsdcTokenAccount(
-            RECEIVER_WALLET.toBase58()
-        );
+        const url = `https://mainnet.helius-rpc.com/?api-key=de8a1ffd-8910-4f4b-a6e1-b8d1778296ea`;
 
-        if (!senderTokenAccount || !receiverTokenAccount) {
-            return res
-                .status(400)
-                .json({ success: false, error: "Token accounts not found" });
-        }
-
-        const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
         const body = {
             jsonrpc: "2.0",
             id: "search-transactions",
             method: "searchTransactions",
             params: {
-                account: receiverTokenAccount,
+                account: RECEIVER_WALLET.toBase58(), // ponto importante
                 query: {
                     rawTransaction: {
                         tokenTransfers: {
-                            toUserAccount: receiverTokenAccount,
-                            fromUserAccount: senderTokenAccount,
+                            toUserAccount: RECEIVER_WALLET.toBase58(),
+                            fromUserAccount: payerPublicKey,
                             mint: USDC_MINT.toBase58(),
                         },
                     },
@@ -87,9 +65,10 @@ export default async function handler(req, res) {
             const transfers = tx.tokenTransfers || [];
             for (const transfer of transfers) {
                 console.log("🔍 Checking transfer:", transfer);
+
                 if (
-                    transfer.toUserAccount === receiverTokenAccount &&
-                    transfer.fromUserAccount === senderTokenAccount &&
+                    transfer.toUserAccount === RECEIVER_WALLET.toBase58() &&
+                    transfer.fromUserAccount === payerPublicKey &&
                     transfer.mint === USDC_MINT.toBase58() &&
                     parseFloat(transfer.tokenAmount) >= REQUIRED_AMOUNT
                 ) {

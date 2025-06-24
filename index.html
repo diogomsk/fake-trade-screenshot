@@ -101,16 +101,19 @@
                 "
             >
                 <h2>Pay $0.99 in USDC (Solana)</h2>
-                <p>Send 0.99 USDC to this address:</p>
-                <code
-                    style="
-                        user-select: all;
-                        display: block;
-                        margin-bottom: 1rem;
-                        font-size: 0.9rem;
-                    "
-                    >4duxyG9rou5NRZgziN8WKaMLXYP1Yms4C2QBMkuoD8em</code
-                >
+                <p>
+                    Send exactly <strong>0.99 USDC</strong> to:<br />
+                    <code
+                        id="receiverWallet"
+                        style="user-select: all; font-size: 0.9rem"
+                    >
+                        4duxyG9rou5NRZgziN8WKaMLXYP1Yms4C2QBMkuoD8em
+                    </code>
+                    <button onclick="copyWallet()" style="margin-top: 0.5rem">
+                        Copy
+                    </button>
+                </p>
+
                 <p>Or scan QR code:</p>
                 <img
                     src="assets/qr-usdc-solana.png"

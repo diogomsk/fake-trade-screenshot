@@ -88,6 +88,11 @@ export default async function handler(req, res) {
         }
 
         console.log(
+            "🔔 verify-payment called. payerPublicKey:",
+            String(payerPublicKey)
+        );
+
+        console.log(
             "🚫 Pagamento não encontrado após checar todas as instruções"
         );
         return res.json({ paid: false });

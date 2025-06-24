@@ -96,6 +96,18 @@ downloadBtn.addEventListener("click", () => {
     paymentModal.style.display = "flex";
 });
 
+function copyWallet() {
+    const wallet = document.getElementById("receiverWallet").textContent.trim();
+    navigator.clipboard
+        .writeText(wallet)
+        .then(() => {
+            alert("Wallet address copied to clipboard!");
+        })
+        .catch(() => {
+            alert("Failed to copy wallet address.");
+        });
+}
+
 paidBtn.addEventListener("click", async () => {
     if (!lastCanvas) {
         alert("Please generate the preview first.");
