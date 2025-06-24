@@ -26,7 +26,7 @@ export default async function handler(req, res) {
             id: "payment-check",
             method: "getTransactions",
             params: {
-                account: senderAddress,
+                account: RECEIVER, //minha wallet
                 limit: 10,
             },
         };
@@ -45,8 +45,6 @@ export default async function handler(req, res) {
         for (const tx of transactions) {
             const transfers = tx.tokenTransfers || [];
             for (const transfer of transfers) {
-                console.log("🔍 Checking transfer:", transfer);
-
                 if (
                     transfer.fromUserAccount === senderAddress &&
                     transfer.toUserAccount === RECEIVER &&
@@ -54,7 +52,9 @@ export default async function handler(req, res) {
                     parseFloat(transfer.tokenAmount) >= REQUIRED_AMOUNT
                 ) {
                     console.log("✅ Pagamento confirmado:", transfer.signature);
-                    return res.status(200).json({ success: true });
+                    return res
+                        .status(200)
+                        .json({ success: true, signature: transfer.signature });
                 }
             }
         }
