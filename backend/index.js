@@ -1,7 +1,9 @@
 import { Connection, PublicKey } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
-const connection = new Connection("https://api.mainnet-beta.solana.com");
+const connection = new Connection(
+    "https://mainnet.helius-rpc.com/?api-key=de8a1ffd-8910-4f4b-a6e1-b8d1778296ea"
+);
 const USDC_MINT_ADDRESS = new PublicKey(
     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 );
@@ -22,7 +24,6 @@ export default async function handler(req, res) {
     try {
         const payerPubKey = new PublicKey(payerPublicKey);
 
-        // 1. Buscar todas contas token USDC do pagador
         const tokenAccounts = await connection.getTokenAccountsByOwner(
             payerPubKey,
             {
@@ -37,7 +38,6 @@ export default async function handler(req, res) {
             });
         }
 
-        // 2. Buscar transações recentes da carteira pagadora (últimas 20 assinaturas)
         const signatures = await connection.getSignaturesForAddress(
             payerPubKey,
             { limit: 20 }
@@ -46,7 +46,10 @@ export default async function handler(req, res) {
         let paid = false;
 
         for (const sigInfo of signatures) {
-            const tx = await connection.getParsedTransaction(sigInfo.signature);
+            const tx = await connection.getParsedTransaction(
+                sigInfo.signature,
+                "confirmed"
+            );
 
             if (!tx) continue;
 
@@ -58,8 +61,7 @@ export default async function handler(req, res) {
                     (ix.parsed?.type === "transfer" ||
                         ix.parsed?.type === "transferChecked") &&
                     ix.parsed.info.mint === USDC_MINT_ADDRESS.toBase58() &&
-                    ix.parsed.info.destination === RECEIVER_WALLET.toBase58() &&
-                    ix.parsed.info.source === payerPubKey.toBase58()
+                    ix.parsed.info.destination === RECEIVER_WALLET.toBase58()
                 ) {
                     const amount = parseInt(ix.parsed.info.amount, 10);
                     const amountInUSDC = amount / 1_000_000;
@@ -70,6 +72,7 @@ export default async function handler(req, res) {
                     }
                 }
             }
+
             if (paid) break;
         }
 

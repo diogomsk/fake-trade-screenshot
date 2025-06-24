@@ -1,6 +1,8 @@
 import { Connection, PublicKey } from "@solana/web3.js";
 
-const connection = new Connection("https://api.mainnet-beta.solana.com");
+const connection = new Connection(
+    "https://mainnet.helius-rpc.com/?api-key=de8a1ffd-8910-4f4b-a6e1-b8d1778296ea"
+);
 const USDC_MINT = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
 const RECEIVER_WALLET = new PublicKey(
     "4duxyG9rou5NRZgziN8WKaMLXYP1Yms4C2QBMkuoD8em"
