@@ -55,7 +55,8 @@ export default async function handler(req, res) {
             for (const ix of instructions) {
                 if (
                     ix.programId.equals(TOKEN_PROGRAM_ID) &&
-                    ix.parsed?.type === "transfer" &&
+                    (ix.parsed?.type === "transfer" ||
+                        ix.parsed?.type === "transferChecked") &&
                     ix.parsed.info.mint === USDC_MINT_ADDRESS.toBase58() &&
                     ix.parsed.info.destination === RECEIVER_WALLET.toBase58() &&
                     ix.parsed.info.source === payerPubKey.toBase58()
