@@ -3,7 +3,7 @@ import { PublicKey } from "@solana/web3.js";
 const RECEIVER_WALLET = "4duxyG9rou5NRZgziN8WKaMLXYP1Yms4C2QBMkuoD8em";
 const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const REQUIRED_AMOUNT = 0.99;
-const HELIUS_API_KEY = "de8a1ffd-8910-4f4b-a6e1-b8d1778296ea";
+const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
 
 export default async function handler(req, res) {
     if (req.method !== "POST") {
@@ -16,12 +16,10 @@ export default async function handler(req, res) {
 
     // 1. Validar existência e tipo
     if (!payerPublicKey || typeof payerPublicKey !== "string") {
-        return res
-            .status(400)
-            .json({
-                success: false,
-                error: "Missing or invalid payerPublicKey.",
-            });
+        return res.status(400).json({
+            success: false,
+            error: "Missing or invalid payerPublicKey.",
+        });
     }
 
     // 2. Validar formato Base58 (típico para chaves Solana)
@@ -45,18 +43,19 @@ export default async function handler(req, res) {
 
     try {
         const heliusUrl = `https://api.helius.xyz/v0/addresses/${payerPublicKey}/transactions?api-key=${HELIUS_API_KEY}`;
-        const response = await fetch(heliusUrl);
+        const response = await fetch(
+            `https://api.helius.xyz/v0/addresses/${payerPublicKey}/transactions?api-key=${HELIUS_API_KEY}`
+        );
+
         if (!response.ok) {
             console.error(
                 "❌ Helius API responded with status:",
                 response.status
             );
-            return res
-                .status(502)
-                .json({
-                    success: false,
-                    error: "Failed to fetch transactions from Helius.",
-                });
+            return res.status(502).json({
+                success: false,
+                error: "Failed to fetch transactions from Helius.",
+            });
         }
 
         const transactions = await response.json();
