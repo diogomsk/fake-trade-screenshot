@@ -64,12 +64,39 @@ function generatePreview(withWatermark = true) {
 
     document.getElementById("preview").innerHTML = previewHTML;
 
-    // Gera canvas SEM watermark para download
-    html2canvas(document.getElementById("card"), {
+    // === Gerar card invisível para download (sem watermark) em tamanho real ===
+    const cleanCard = document.createElement("div");
+    cleanCard.className = `screenshot-card ${platform}`;
+    cleanCard.style.backgroundImage = `url('${platformBg[platform]}')`;
+    cleanCard.style.width = "1160px";
+    cleanCard.style.height = "652px";
+    cleanCard.style.position = "absolute";
+    cleanCard.style.left = "-9999px";
+
+    cleanCard.innerHTML = `
+      <div class="position-line">
+        <span class="position-type ${position.toLowerCase()}">${position}</span>
+        <span class="leverage">${leverage}X</span>
+        <span class="pair">${pair} Perpetual</span>
+      </div>
+      <div class="pnl ${
+          pnl >= 0 ? "positive" : "negative"
+      }">${formattedPnL}%</div>
+      <div class="entry"><span class="value">${formattedEntry}</span></div>
+      <div class="last"><span class="value">${formattedLast}</span></div>
+      <div class="timestamp">${timestamp}</div>
+    `;
+
+    document.body.appendChild(cleanCard);
+
+    html2canvas(cleanCard, {
         useCORS: true,
         backgroundColor: null,
+        width: 1160,
+        height: 652,
     }).then((canvas) => {
         lastCanvas = canvas;
+        document.body.removeChild(cleanCard); // limpar
     });
 
     downloadBtn.style.display = "block";
