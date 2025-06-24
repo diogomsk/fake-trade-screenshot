@@ -124,21 +124,16 @@ paidBtn.addEventListener("click", async () => {
     }
 
     try {
-        const response = await fetch(
-            "https://fake-trade-screenshot.vercel.app/api/verify-payment",
-            {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ payerPublicKey }),
-            }
-        );
-
+        const response = await fetch("/api/verify-payment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ payerPublicKey }),
+        });
         const data = await response.json();
 
         if (data.success) {
             alert("Payment confirmed! Download will start now.");
             paymentModal.style.display = "none";
-
             const link = document.createElement("a");
             link.download = "fake-trade-no-watermark.png";
             link.href = lastCanvas.toDataURL("image/png");
