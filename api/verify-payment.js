@@ -26,45 +26,59 @@ export default async function handler(req, res) {
     const REQUIRED_AMOUNT = 0.99;
 
     try {
-        const resp = await fetch(
-            `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`,
-            {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    jsonrpc: "2.0",
-                    id: "mintTransfers",
-                    method: "getTokenTransfersByMint",
-                    params: {
-                        mint: USDC_MINT,
-                        toWallet: RECEIVER,
-                        limit: 20,
-                    },
-                }),
-            }
-        );
+        const url = `https://api.helius.xyz/v0/addresses/${payerPublicKey}/transactions/?api-key=${HELIUS_API_KEY}`;
 
-        const { result: transfers = [] } = await resp.json();
-        console.log("📦 Total mint‑specific transfers:", transfers.length);
+        const response = await fetch(url);
+        if (!response.ok) {
+            console.error("Error fetching transactions:", response.statusText);
+            return res
+                .status(500)
+                .json({ success: false, error: "Error fetching transactions" });
+        }
 
-        for (const t of transfers) {
-            console.log("🔍 Transfer:", t);
-            if (
-                t.fromUserAccount === payerPublicKey &&
-                t.toUserAccount === RECEIVER &&
-                parseFloat(t.tokenAmount) >= REQUIRED_AMOUNT
-            ) {
-                console.log("✅ Payment confirmed:", t.signature);
-                return res
-                    .status(200)
-                    .json({ success: true, signature: t.signature });
+        const transactions = await response.json();
+        console.log(`📦 Found ${transactions.length} transactions for payer`);
+
+        for (const tx of transactions) {
+            const instructions =
+                tx.transaction.message.instructions ||
+                tx.transaction.message.compiledInstructions ||
+                [];
+
+            // Alternatively, Helius returns parsedInstructions:
+            const parsedInstructions = tx.parsedInstructions || [];
+
+            for (const ix of parsedInstructions) {
+                if (
+                    ix.program === "spl-token" &&
+                    (ix.parsed?.type === "transfer" ||
+                        ix.parsed?.type === "transferChecked")
+                ) {
+                    const info = ix.parsed.info;
+                    if (
+                        info.mint === USDC_MINT &&
+                        info.destination === RECEIVER &&
+                        parseFloat(info.amount) / 1e6 >= REQUIRED_AMOUNT
+                    ) {
+                        console.log(
+                            "✅ Payment found in transaction:",
+                            tx.transaction.signatures[0]
+                        );
+                        return res
+                            .status(200)
+                            .json({
+                                success: true,
+                                signature: tx.transaction.signatures[0],
+                            });
+                    }
+                }
             }
         }
 
         console.log("🚫 No valid USDC payment found");
         return res.status(200).json({ success: false });
-    } catch (e) {
-        console.error("❌ Error verifying payment:", e);
+    } catch (error) {
+        console.error("❌ Error verifying payment:", error);
         return res
             .status(500)
             .json({ success: false, error: "Internal Server Error" });
