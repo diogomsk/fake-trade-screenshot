@@ -12,14 +12,14 @@ const RECEIVER_WALLET = new PublicKey(
 );
 
 export default async function handler(req, res) {
-    if (req.method !== "POST") {
-        return res.status(405).json({ error: "Method not allowed" });
-    }
+    console.log(
+        "🔔 verify-payment called. payerPublicKey:",
+        req.body.payerPublicKey
+    );
 
     const { payerPublicKey } = req.body;
-    if (!payerPublicKey) {
+    if (!payerPublicKey)
         return res.status(400).json({ error: "Missing payerPublicKey" });
-    }
 
     try {
         const payerPubKey = new PublicKey(payerPublicKey);
@@ -30,55 +30,69 @@ export default async function handler(req, res) {
                 mint: USDC_MINT_ADDRESS,
             }
         );
-
-        if (tokenAccounts.value.length === 0) {
-            return res.json({
-                paid: false,
-                message: "No USDC token accounts found for payer",
-            });
-        }
+        console.log(
+            "🔹 Payer USDC token accounts:",
+            tokenAccounts.value.map((a) => a.pubkey.toBase58())
+        );
 
         const signatures = await connection.getSignaturesForAddress(
             payerPubKey,
-            { limit: 20 }
+            { limit: 50 }
         );
-
-        let paid = false;
+        console.log(`📦 Found ${signatures.length} transactions for payer`);
 
         for (const sigInfo of signatures) {
-            const tx = await connection.getParsedTransaction(
-                sigInfo.signature,
-                "confirmed"
+            const sig = sigInfo.signature;
+            const tx = await connection.getParsedTransaction(sig, "confirmed");
+            if (!tx) {
+                console.log("⚠️ Transaction empty or not parsed:", sig);
+                continue;
+            }
+
+            console.log(`\n📌 Checking tx ${sig}:`);
+            console.log(
+                "➖ Instructions count:",
+                tx.transaction.message.instructions.length
             );
 
-            if (!tx) continue;
+            for (const ix of tx.transaction.message.instructions) {
+                console.log(
+                    "Instruction type:",
+                    ix.parsed?.type,
+                    "programId:",
+                    ix.programId.toBase58()
+                );
+                if (!ix.parsed) continue;
 
-            const instructions = tx.transaction.message.instructions;
-
-            for (const ix of instructions) {
+                const info = ix.parsed.info;
                 if (
                     ix.programId.equals(TOKEN_PROGRAM_ID) &&
-                    (ix.parsed?.type === "transfer" ||
-                        ix.parsed?.type === "transferChecked") &&
-                    ix.parsed.info.mint === USDC_MINT_ADDRESS.toBase58() &&
-                    ix.parsed.info.destination === RECEIVER_WALLET.toBase58()
+                    (ix.parsed.type === "transfer" ||
+                        ix.parsed.type === "transferChecked")
                 ) {
-                    const amount = parseInt(ix.parsed.info.amount, 10);
-                    const amountInUSDC = amount / 1_000_000;
+                    console.log(
+                        `-- transfer detected: mint=${info.mint}, source=${info.source}, dest=${info.destination}, amount=${info.amount}`
+                    );
+                    const amountInUSDC = parseInt(info.amount, 10) / 1e6;
+                    console.log(`   → amountInUSDC: ${amountInUSDC}`);
 
-                    if (amountInUSDC >= 0.99) {
-                        paid = true;
-                        break;
+                    if (
+                        info.destination === RECEIVER_WALLET.toBase58() &&
+                        amountInUSDC >= 0.99
+                    ) {
+                        console.log("✅ Pagamento encontrado em", sig);
+                        return res.json({ paid: true, signature: sig });
                     }
                 }
             }
-
-            if (paid) break;
         }
 
-        return res.json({ paid });
-    } catch (error) {
-        console.error("Error verifying payment:", error);
+        console.log(
+            "🚫 Pagamento não encontrado após checar todas as instruções"
+        );
+        return res.json({ paid: false });
+    } catch (e) {
+        console.error("❌ Erro na verificação:", e);
         return res.status(500).json({ error: "Internal Server Error" });
     }
 }
