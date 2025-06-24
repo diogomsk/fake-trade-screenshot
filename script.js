@@ -61,7 +61,11 @@ function generatePreview(withWatermark = true) {
           ${watermarkHtml}
         </div>
         `;
-        document.getElementById("preview").innerHTML = previewHTML;
+        document.getElementById("preview").innerHTML = `
+    <div class="preview-wrapper">
+        ${previewHTML}
+    </div>
+`;
     } else {
         // Gerar canvas invisível SEM watermark e no tamanho original para download
         const cleanCard = document.createElement("div");

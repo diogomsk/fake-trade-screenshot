@@ -62,21 +62,27 @@ button:hover {
     background: #01390c;
 }
 
-#preview {
-    width: 100%;
-    max-width: 100%;
-    overflow-x: auto;
-    display: flex;
-    justify-content: center;
-    padding: 2rem 0;
-}
-
 /* #preview #card {
     width: 1160px;
     height: 652px;
     transform: scale(0.43);
     transform-origin: top left;
 } */
+
+#preview {
+    width: 100%;
+    overflow-x: auto;
+    display: flex;
+    justify-content: center;
+    padding: 2rem 0;
+}
+
+#preview .preview-wrapper {
+    transform: scale(0.43);
+    transform-origin: top left;
+    width: fit-content;
+    height: fit-content;
+}
 
 .screenshot-card {
     width: 1160px;
@@ -173,11 +179,4 @@ button:hover {
     pointer-events: none;
     user-select: none;
     z-index: 999;
-}
-
-#preview .screenshot-card {
-    transform: scale(0.43);
-    transform-origin: top left;
-    width: 1160px;
-    height: 652px;
 }
