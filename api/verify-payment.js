@@ -1,12 +1,8 @@
 import { Connection, PublicKey } from "@solana/web3.js";
 
-const connection = new Connection(
-    "https://mainnet.helius-rpc.com/?api-key=de8a1ffd-8910-4f4b-a6e1-b8d1778296ea"
-);
-const USDC_MINT = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
-const RECEIVER_WALLET = new PublicKey(
-    "4duxyG9rou5NRZgziN8WKaMLXYP1Yms4C2QBMkuoD8em"
-);
+const HELIUS_API_KEY = "de8a1ffd-8910-4f4b-a6e1-b8d1778296ea";
+const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+const RECEIVER_WALLET = "4duxyG9rou5NRZgziN8WKaMLXYP1Yms4C2QBMkuoD8em";
 const REQUIRED_AMOUNT = 0.99;
 
 export default async function handler(req, res) {
@@ -17,37 +13,28 @@ export default async function handler(req, res) {
     }
 
     const { payerPublicKey } = req.body;
-    console.log("🔔 verify-payment called. payerPublicKey:", payerPublicKey);
-
     if (!payerPublicKey) {
         return res
             .status(400)
             .json({ success: false, error: "Missing payerPublicKey" });
     }
 
+    console.log("🔔 verify-payment called. payerPublicKey:", payerPublicKey);
+
     try {
-        const url = `https://mainnet.helius-rpc.com/?api-key=de8a1ffd-8910-4f4b-a6e1-b8d1778296ea`;
+        const heliusUrl = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
 
         const body = {
             jsonrpc: "2.0",
-            id: "search-transactions",
-            method: "searchTransactions",
+            id: "fetch-transactions",
+            method: "getTransactions",
             params: {
-                account: RECEIVER_WALLET.toBase58(), // ponto importante
-                query: {
-                    rawTransaction: {
-                        tokenTransfers: {
-                            toUserAccount: RECEIVER_WALLET.toBase58(),
-                            fromUserAccount: payerPublicKey,
-                            mint: USDC_MINT.toBase58(),
-                        },
-                    },
-                },
-                limit: 20,
+                account: RECEIVER_WALLET,
+                limit: 25,
             },
         };
 
-        const response = await fetch(url, {
+        const response = await fetch(heliusUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body),
@@ -56,34 +43,30 @@ export default async function handler(req, res) {
         const json = await response.json();
         const transactions = json.result || [];
 
-        console.log(
-            "📦 Total matching transactions found:",
-            transactions.length
-        );
+        console.log("📦 Found transactions:", transactions.length);
 
         for (const tx of transactions) {
             const transfers = tx.tokenTransfers || [];
-            for (const transfer of transfers) {
-                console.log("🔍 Checking transfer:", transfer);
+            for (const t of transfers) {
+                const isMatch =
+                    t.toUserAccount === RECEIVER_WALLET &&
+                    t.fromUserAccount === payerPublicKey &&
+                    t.mint === USDC_MINT &&
+                    parseFloat(t.tokenAmount) >= REQUIRED_AMOUNT;
 
-                if (
-                    transfer.toUserAccount === RECEIVER_WALLET.toBase58() &&
-                    transfer.fromUserAccount === payerPublicKey &&
-                    transfer.mint === USDC_MINT.toBase58() &&
-                    parseFloat(transfer.tokenAmount) >= REQUIRED_AMOUNT
-                ) {
-                    console.log("✅ Pagamento confirmado:", transfer.signature);
+                if (isMatch) {
+                    console.log("✅ Payment confirmed. Tx:", t.signature);
                     return res
                         .status(200)
-                        .json({ success: true, signature: transfer.signature });
+                        .json({ success: true, signature: t.signature });
                 }
             }
         }
 
-        console.log("🚫 Nenhum pagamento válido encontrado.");
+        console.log("🚫 No matching USDC payment found.");
         return res.status(200).json({ success: false });
-    } catch (error) {
-        console.error("❌ Erro ao verificar pagamento:", error);
+    } catch (err) {
+        console.error("❌ Error verifying payment:", err);
         return res
             .status(500)
             .json({ success: false, error: "Internal Server Error" });
