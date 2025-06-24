@@ -4,7 +4,7 @@ const RECEIVER_WALLET = "4duxyG9rou5NRZgziN8WKaMLXYP1Yms4C2QBMkuoD8em";
 const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const REQUIRED_AMOUNT = 0.99;
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
-const MAX_PAYMENT_AGE_MS = 5 * 60 * 1000; // 5 minutos
+const MAX_PAYMENT_AGE_MS = 10 * 60 * 1000; // aumentar p/ 10 minutos só para debug
 
 export default async function handler(req, res) {
     if (req.method !== "POST") {
@@ -71,42 +71,45 @@ export default async function handler(req, res) {
                     t.mint === USDC_MINT &&
                     parseFloat(t.tokenAmount) >= REQUIRED_AMOUNT
                 ) {
-                    // Obter timestamp robusto
-                    let txTime = 0;
-                    if (tx.timestamp) {
-                        txTime = new Date(tx.timestamp).getTime();
-                    } else if (tx.blockTime) {
-                        txTime = tx.blockTime * 1000; // blockTime vem em segundos
-                    } else {
+                    const signature = tx.signature;
+                    const timestampRaw = tx.timestamp;
+                    const blockTimeRaw = tx.blockTime;
+
+                    const txTime = timestampRaw
+                        ? new Date(timestampRaw).getTime()
+                        : blockTimeRaw
+                        ? blockTimeRaw * 1000
+                        : 0;
+
+                    const ageMs = now - txTime;
+
+                    console.log(
+                        `🧠 [${signature}] tx.timestamp = ${timestampRaw}, tx.blockTime = ${blockTimeRaw}`
+                    );
+                    console.log(
+                        `⏱️ txTime = ${txTime}, now = ${now}, ageMs = ${ageMs}`
+                    );
+
+                    if (txTime === 0) {
                         console.warn(
-                            "⚠️ Transaction has no timestamp or blockTime, skipping"
+                            `⚠️ Skipping tx with no timestamp or blockTime`
                         );
                         continue;
                     }
 
-                    const age = now - txTime;
-                    console.log(
-                        "⏱️ txTime:",
-                        txTime,
-                        "| now:",
-                        now,
-                        "| age (ms):",
-                        age
-                    );
-
-                    if (age <= MAX_PAYMENT_AGE_MS) {
+                    if (ageMs <= MAX_PAYMENT_AGE_MS) {
                         console.log(
-                            "✅ Valid USDC payment found:",
-                            tx.signature
+                            "✅ Payment is recent enough, success:",
+                            signature
                         );
                         return res.status(200).json({
                             success: true,
-                            signature: tx.signature,
+                            signature,
                         });
                     } else {
                         console.warn(
                             "⚠️ Payment found, but too old:",
-                            tx.signature
+                            signature
                         );
                     }
                 }
