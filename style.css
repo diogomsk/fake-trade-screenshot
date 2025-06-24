@@ -62,25 +62,25 @@ button:hover {
     background: #01390c;
 }
 
-/* Preview container - limitar largura e esconder overflow horizontal */
 #preview {
-    width: 550px; /* mesmo do container principal */
-    overflow-x: hidden; /* evita barra de rolagem horizontal */
-    margin: 0 auto;
-    padding: 2rem 0;
+    width: 100%;
+    max-width: 550px; /* mesmo max-width do container */
+    overflow-x: auto;
     display: flex;
     justify-content: center;
+    padding: 2rem 0;
+    border: 1px solid transparent; /* evita colapso */
+    box-sizing: border-box; /* importante */
 }
 
-/* Wrapper que vai aplicar escala visual */
-#preview .preview-wrapper {
-    transform: scale(0.43); /* ajusta visualmente o tamanho */
+.preview-wrapper {
+    transform: scale(0.43);
     transform-origin: top left;
-    width: 1160px; /* tamanho real do card para manter layout */
+    width: 1160px; /* tamanho original do card */
     height: 652px;
+    box-sizing: border-box;
 }
 
-/* Card no tamanho real, sem escala */
 .screenshot-card {
     width: 1160px;
     height: 652px;
@@ -92,7 +92,6 @@ button:hover {
     overflow: hidden;
 }
 
-/* Posicionamento do texto para plataforma Binance */
 .screenshot-card.binance .position-line {
     position: absolute;
     top: 180px;

@@ -32,40 +32,36 @@ function generatePreview(withWatermark = true) {
     const timestamp = `${year}-${month}-${day} ${hours}:${minutes}`;
 
     let pnl = ((last - entry) / entry) * 100 * leverage;
-    if (position === "Short") pnl *= -1;
+    if (position.toLowerCase() === "short") pnl *= -1;
 
-    const formattedEntry = parseFloat(entry.toFixed(3)).toString();
-    const formattedLast = parseFloat(last.toFixed(3)).toString();
-
+    const formattedEntry = entry.toFixed(3);
+    const formattedLast = last.toFixed(3);
     const formattedPnL = (pnl >= 0 ? "+" : "") + pnl.toFixed(2);
 
     if (withWatermark) {
-        // Preview COM watermark para o usuário
         const watermarkHtml = `<div class="watermark-overlay">FAKETRADESHOT.XYZ</div>`;
 
         const previewHTML = `
-        <div id="card" class="screenshot-card ${platform}">
-          <div class="position-line">
-            <span class="position-type ${position.toLowerCase()}">${position}</span>
-            <span class="leverage">${leverage}X</span>
-            <span class="pair">${pair} Perpetual</span>
-          </div>
-          <div class="pnl ${
-              pnl >= 0 ? "positive" : "negative"
-          }">${formattedPnL}%</div>
-          <div class="entry"><span class="value">${formattedEntry}</span></div>
-          <div class="last"><span class="value">${formattedLast}</span></div>
-          <div class="timestamp">${timestamp}</div>
-          ${watermarkHtml}
-        </div>
+            <div id="card" class="screenshot-card ${platform}">
+              <div class="position-line">
+                <span class="position-type ${position.toLowerCase()}">${position}</span>
+                <span class="leverage">${leverage}X</span>
+                <span class="pair">${pair} Perpetual</span>
+              </div>
+              <div class="pnl ${
+                  pnl >= 0 ? "positive" : "negative"
+              }">${formattedPnL}%</div>
+              <div class="entry"><span class="value">${formattedEntry}</span></div>
+              <div class="last"><span class="value">${formattedLast}</span></div>
+              <div class="timestamp">${timestamp}</div>
+              ${watermarkHtml}
+            </div>
         `;
-        document.getElementById("preview").innerHTML = `
-          <div class="preview-wrapper">
-            ${previewHTML}
-          </div>
-        `;
+
+        document.getElementById(
+            "preview"
+        ).innerHTML = `<div class="preview-wrapper">${previewHTML}</div>`;
     } else {
-        // Gerar canvas invisível SEM watermark e no tamanho original para download
         const cleanCard = document.createElement("div");
         cleanCard.className = `screenshot-card ${platform}`;
         cleanCard.style.backgroundImage = `url('${platformBg[platform]}')`;
@@ -121,8 +117,8 @@ if (DEBUG_MODE) {
 
 document.getElementById("tradeForm").addEventListener("submit", function (e) {
     e.preventDefault();
-    generatePreview(true); // preview com watermark (escala 0.43 via CSS)
-    generatePreview(false); // canvas full size para download sem watermark
+    generatePreview(true); // atualiza preview visível com watermark
+    generatePreview(false); // atualiza canvas invisível para download sem watermark
 });
 
 downloadBtn.addEventListener("click", () => {
