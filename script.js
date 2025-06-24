@@ -102,11 +102,11 @@ paidBtn.addEventListener("click", async () => {
         return;
     }
 
-    const senderAddress = prompt(
+    const payerPublicKey = prompt(
         "Please enter your Solana wallet address used for payment:"
     );
 
-    if (!senderAddress) {
+    if (!payerPublicKey) {
         alert("Wallet address is required.");
         return;
     }
@@ -117,7 +117,7 @@ paidBtn.addEventListener("click", async () => {
             {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ senderAddress }),
+                body: JSON.stringify({ payerPublicKey }),
             }
         );
 

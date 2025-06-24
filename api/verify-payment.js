@@ -1,3 +1,24 @@
+import { Connection, PublicKey } from "@solana/web3.js";
+
+const connection = new Connection("https://api.mainnet-beta.solana.com");
+const USDC_MINT = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+const RECEIVER_WALLET = new PublicKey(
+    "4duxyG9rou5NRZgziN8WKaMLXYP1Yms4C2QBMkuoD8em"
+);
+const HELIUS_API_KEY = "de8a1ffd-8910-4f4b-a6e1-b8d1778296ea";
+const REQUIRED_AMOUNT = 0.99;
+
+async function getUsdcTokenAccount(walletAddress) {
+    const accounts = await connection.getTokenAccountsByOwner(
+        new PublicKey(walletAddress),
+        { mint: USDC_MINT }
+    );
+    if (accounts.value.length > 0) {
+        return accounts.value[0].pubkey.toBase58();
+    }
+    return null;
+}
+
 export default async function handler(req, res) {
     if (req.method !== "POST") {
         return res
@@ -5,34 +26,40 @@ export default async function handler(req, res) {
             .json({ success: false, error: "Method Not Allowed" });
     }
 
-    const { senderAddress } = req.body;
-    console.log("🔔 verify-payment called. senderAddress:", senderAddress);
+    const { payerPublicKey } = req.body;
+    console.log("🔔 verify-payment called. payerPublicKey:", payerPublicKey);
 
-    if (!senderAddress) {
+    if (!payerPublicKey) {
         return res
             .status(400)
-            .json({ success: false, error: "Missing senderAddress" });
+            .json({ success: false, error: "Missing payerPublicKey" });
     }
 
-    const HELIUS_API_KEY = "de8a1ffd-8910-4f4b-a6e1-b8d1778296ea";
-    const RECEIVER = "4duxyG9rou5NRZgziN8WKaMLXYP1Yms4C2QBMkuoD8em";
-    const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-    const REQUIRED_AMOUNT = 0.99;
-
     try {
+        const senderTokenAccount = await getUsdcTokenAccount(payerPublicKey);
+        const receiverTokenAccount = await getUsdcTokenAccount(
+            RECEIVER_WALLET.toBase58()
+        );
+
+        if (!senderTokenAccount || !receiverTokenAccount) {
+            return res
+                .status(400)
+                .json({ success: false, error: "Token accounts not found" });
+        }
+
         const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
         const body = {
             jsonrpc: "2.0",
             id: "search-transactions",
             method: "searchTransactions",
             params: {
-                account: RECEIVER,
+                account: receiverTokenAccount,
                 query: {
                     rawTransaction: {
                         tokenTransfers: {
-                            toUserAccount: RECEIVER,
-                            fromUserAccount: senderAddress,
-                            mint: USDC_MINT,
+                            toUserAccount: receiverTokenAccount,
+                            fromUserAccount: senderTokenAccount,
+                            mint: USDC_MINT.toBase58(),
                         },
                     },
                 },
@@ -59,9 +86,9 @@ export default async function handler(req, res) {
             for (const transfer of transfers) {
                 console.log("🔍 Checking transfer:", transfer);
                 if (
-                    transfer.toUserAccount === RECEIVER &&
-                    transfer.fromUserAccount === senderAddress &&
-                    transfer.mint === USDC_MINT &&
+                    transfer.toUserAccount === receiverTokenAccount &&
+                    transfer.fromUserAccount === senderTokenAccount &&
+                    transfer.mint === USDC_MINT.toBase58() &&
                     parseFloat(transfer.tokenAmount) >= REQUIRED_AMOUNT
                 ) {
                     console.log("✅ Pagamento confirmado:", transfer.signature);

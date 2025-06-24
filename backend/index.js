@@ -4,11 +4,10 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 const connection = new Connection("https://api.mainnet-beta.solana.com");
 const USDC_MINT_ADDRESS = new PublicKey(
     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-); // USDC mainnet
-
+);
 const RECEIVER_WALLET = new PublicKey(
     "4duxyG9rou5NRZgziN8WKaMLXYP1Yms4C2QBMkuoD8em"
-); // sua wallet
+);
 
 export default async function handler(req, res) {
     if (req.method !== "POST") {
@@ -38,14 +37,12 @@ export default async function handler(req, res) {
             });
         }
 
-        // 2. Buscar transações recentes da carteira pagadora
-        // Pega últimas 20 assinaturas (você pode ajustar)
+        // 2. Buscar transações recentes da carteira pagadora (últimas 20 assinaturas)
         const signatures = await connection.getSignaturesForAddress(
             payerPubKey,
             { limit: 20 }
         );
 
-        // 3. Para cada assinatura, buscar a transação e analisar instruções SPL Token transfer
         let paid = false;
 
         for (const sigInfo of signatures) {
@@ -63,10 +60,7 @@ export default async function handler(req, res) {
                     ix.parsed.info.destination === RECEIVER_WALLET.toBase58() &&
                     ix.parsed.info.source === payerPubKey.toBase58()
                 ) {
-                    // Valor transferido é em "amount", em formato inteiro (tokens tem 6 decimais)
                     const amount = parseInt(ix.parsed.info.amount, 10);
-
-                    // USDC tem 6 decimais
                     const amountInUSDC = amount / 1_000_000;
 
                     if (amountInUSDC >= 0.99) {
@@ -75,7 +69,6 @@ export default async function handler(req, res) {
                     }
                 }
             }
-
             if (paid) break;
         }
 
