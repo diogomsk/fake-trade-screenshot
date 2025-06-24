@@ -72,11 +72,18 @@ export default async function handler(req, res) {
                     parseFloat(t.tokenAmount) >= REQUIRED_AMOUNT;
 
                 if (isValid) {
-                    const txTime = new Date(tx.timestamp).getTime();
-                    const now = Date.now();
+                    const txTime = new Date(tx.timestamp).getTime(); // timestamp da Helius (UTC)
+                    const now = Date.now(); // timestamp atual (UTC)
                     const age = now - txTime;
 
-                    console.log(`🕒 Payment age: ${Math.round(age / 1000)}s`);
+                    console.log(
+                        "🔎 now:",
+                        now,
+                        "| txTime:",
+                        txTime,
+                        "| age:",
+                        age
+                    );
 
                     if (age <= MAX_PAYMENT_AGE_MS) {
                         console.log(
