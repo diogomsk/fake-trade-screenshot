@@ -31,6 +31,11 @@ export default async function handler(req, res) {
         );
 
         for (const tx of transactions) {
+            console.log("🔎 Inspecting tx:", tx.signature);
+            console.log(
+                "Full tokenTransfers sample:",
+                JSON.stringify(tx.tokenTransfers?.slice(0, 3) || [], null, 2)
+            );
             const transfers = tx.tokenTransfers || [];
 
             for (const transfer of transfers) {
