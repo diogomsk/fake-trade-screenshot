@@ -15,15 +15,30 @@ export default async function handler(req, res) {
     }
 
     const HELIUS_API_KEY = "de8a1ffd-8910-4f4b-a6e1-b8d1778296ea";
-    const RECEIVER = "4duxyG9rou5NRZgziN8WKaMLXYP1Yms4C2QBMkuoD8em";
-    const USDC_MINT = "Es9vMFrzaCERJJk5f6ehdE8S7s8Z2RyAwqu7gTgnf2K";
+    const RECEIVER = "4duxyG9rou5NRZgziN8WKaMLXYP1Yms4C2QBMkuoD8em"; // sua wallet
+    const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
     const REQUIRED_AMOUNT = 0.99;
 
     try {
-        const url = `https://api.helius.xyz/v0/addresses/${RECEIVER}/transactions?api-key=${HELIUS_API_KEY}&type=TRANSFER`;
+        const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+        const body = {
+            jsonrpc: "2.0",
+            id: "payment-check",
+            method: "getTransactions",
+            params: {
+                account: RECEIVER,
+                limit: 100,
+            },
+        };
 
-        const response = await fetch(url);
-        const transactions = await response.json();
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+        });
+
+        const json = await response.json();
+        const transactions = json.result || [];
 
         console.log(
             "📦 Total TRANSFER transactions found:",
@@ -31,24 +46,19 @@ export default async function handler(req, res) {
         );
 
         for (const tx of transactions) {
-            console.log("🔎 Inspecting tx:", tx.signature);
-            console.log(
-                "Full tokenTransfers sample:",
-                JSON.stringify(tx.tokenTransfers?.slice(0, 3) || [], null, 2)
-            );
             const transfers = tx.tokenTransfers || [];
-
             for (const transfer of transfers) {
                 if (
-                    transfer.fromUserAccount === senderAddress &&
-                    transfer.toUserAccount === RECEIVER &&
+                    transfer.fromUserAccount === RECEIVER &&
+                    transfer.toUserAccount === senderAddress &&
                     transfer.mint === USDC_MINT &&
                     parseFloat(transfer.tokenAmount) >= REQUIRED_AMOUNT
                 ) {
                     console.log("✅ Pagamento confirmado:", tx.signature);
-                    return res
-                        .status(200)
-                        .json({ success: true, signature: tx.signature });
+                    return res.status(200).json({
+                        success: true,
+                        signature: tx.signature,
+                    });
                 }
             }
         }
